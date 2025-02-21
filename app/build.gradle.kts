@@ -47,6 +47,9 @@ android {
 
 dependencies {
 
+     //implementation(libs.play.services) // Replace with the latest version
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -73,6 +76,15 @@ dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Testing dependencies
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("com.google.truth:truth:1.1.5")
+    testImplementation("androidx.room:room-testing:2.6.1")
 
     implementation(libs.dagger.hilt)
     kapt(libs.hilt.android.compiler.v2511)

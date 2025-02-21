@@ -25,6 +25,7 @@ navigationRuntimeKtx = "2.8.7"
 navigationCompose = "2.8.7"
 navigationTesting = "2.8.7"
 navigationUi = "2.8.7"
+playServices = "17.0.0"
 serialization = "2.0.21"
 firebaseCrashlyticsBuildtools = "3.0.3"
 firebaseFirestoreKtx = "25.1.2"
@@ -78,6 +79,7 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-rxjava2 = { group = "androidx.room", name = "room-rxjava2", version.ref = "roomRxjava2" }
 androidx-room-rxjava3 = { group = "androidx.room", name = "room-rxjava3", version.ref = "roomRxjava3" }
 androidx-room-guava = { group = "androidx.room", name = "room-guava", version.ref = "roomGuava" }
+play-services = { module = "com.google.android.gms:play-services", version.ref = "playServices" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
