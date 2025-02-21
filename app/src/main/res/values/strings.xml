@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">IndiKey</string>
+    <string name="authentication">Autenticação</string>
+    <string name="username">Nome:</string>
+    <string name="confirm_password">Confirme a senha:</string>
+    <string name="password">Senha:</string>
+    <string name="phone">Telefone:</string>
+    <string name="cnpj">CNPJ:</string>
+    <string name="email">E-mail:</string>
+    <string name="register">Criar conta</string>
+    <string name="login">Login</string>
+    <string name="saudação">Benvindo</string>
+    <string name="cadastro">Cadastro de usuários</string>
+    <string name="painel">Painel</string>
+    <string name="search">Pesquisar CNPJ</string>
+    <string name="client_list">Clientes</string>
+    <string name="add_client">Adicionar</string>
+    <string name="new_this_month">Novos</string>
+    <string name="pending_approval">Pendentes</string>
+    <string name="active_clients">Ativos</string>
+    <string name="total_clients">Total</string>
+    <string name="description">Quais produtos você oferece?</string>
+    <string name="cliente">Cliente</string>
+    <string name="contato">Contato</string>
+    <string name="razao_social">Razão social:</string>
+    <string name="projeto">Projeto:</string>
+    <string name="clientes">Clientes</string>
+    <string name="editar">Editar cliente</string>
+    <string name="indicacao">Indicado por:</string>
+    <string name="date">Data</string>
+</resources>

@@ -1,0 +1,7 @@
+package br.com.alfatek.indikey.presentation.pages.dashboard
+
+data class DashboardState (
+    val isLoading: Boolean = false,
+    val isSuccess: String? = null,
+    val isError: String? = null
+)
