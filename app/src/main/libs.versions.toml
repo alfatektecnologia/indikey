@@ -1,0 +1,73 @@
+toml
+# Improved TOML File
+
+# --- Versions ---
+[versions]
+# Android
+agp = "8.8.1"
+kotlin = "2.1.0"
+coreKtx = "1.15.0"
+activityCompose = "1.10.0"
+lifecycleRuntimeKtx = "2.8.7"
+
+# Compose
+composeBom = "2025.02.00"
+material3 = "1.3.1" # Renamed for clarity
+
+# Navigation
+navigation = "2.8.7" # Consolidated version for all navigation libraries
+
+# Hilt
+hilt = "2.55"
+hiltCompiler = "1.2.0" # Compiler for Hilt-Navigation-Compose
+
+# Firebase
+firebaseBom = "33.9.0"
+firebaseDatabase = "21.0.0"
+firebaseAuth = "23.2.0"
+firebaseFirestoreKtx = "25.1.2"
+firebaseCrashlyticsBuildtools = "3.0.3"
+
+# Room
+room = "2.6.1" # Consolidated version for all Room libraries
+
+# Testing
+junit = "4.13.2"
+junitExt = "1.2.1" # Renamed for clarity
+espressoCore = "3.6.1"
+
+# Other
+googleGmsGoogleServices = "4.4.2"
+playServices = "17.0.0"
+serialization = "2.0.21"
+
+# --- Libraries ---
+[libraries]
+# Android Core
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# Compose
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# Navigation
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+androidx-navigation-dynamic-features-fragment = { module = "androidx.navigation:navigation-dynamic-features-fragment", version.ref = "navigation" }
+androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragment", version.ref = "navigation" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigation" }
+androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
+androidx-navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "navigation" }
+
+# Hilt
+dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltCompiler" }
+dagger-hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltCompiler" }

@@ -6,9 +6,11 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("dagger.hilt.android.plugin")
+    //id("com.google.devtools.ksp") version "2.0.20-1.0.24"
     alias(libs.plugins.kotlinx.serialization)
 
 }
+
 
 android {
     namespace = "br.com.alfatek.indikey"
@@ -23,6 +25,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
 
     buildTypes {
         release {
@@ -86,9 +89,21 @@ dependencies {
     testImplementation("com.google.truth:truth:1.1.5")
     testImplementation("androidx.room:room-testing:2.6.1")
 
-    implementation(libs.dagger.hilt)
-    kapt(libs.hilt.android.compiler.v2511)
-    kapt (libs.androidx.hilt.compiler)
+   //hilt
+    implementation ("com.google.dagger:hilt-android:2.55")
+    kapt ("com.google.dagger:hilt-compiler:2.55")
+
+    // For instrumentation tests
+    androidTestImplementation ( "com.google.dagger:hilt-android-testing:2.55")
+    kaptAndroidTest ("com.google.dagger:hilt-compiler:2.55")
+
+    // For local unit tests
+    testImplementation ("com.google.dagger:hilt-android-testing:2.55")
+    kaptTest ("com.google.dagger:hilt-compiler:2.55")
+
+
+
+
     implementation (libs.androidx.hilt.navigation.compose.v120)
 
     implementation(platform(libs.firebase.bom))
@@ -113,4 +128,11 @@ dependencies {
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
 
+    implementation("androidx.preference:preference-ktx:1.2.1")
+
+
+
+}
+kapt {
+    correctErrorTypes = true
 }
