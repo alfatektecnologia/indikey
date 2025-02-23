@@ -18,9 +18,13 @@ interface AuthRepository {
      fun getUsers(): Flow<Resource<List<User>>>
      suspend fun<T: Any> saveToFirestore(collection:String, data: T)
      suspend fun getClient(cnpj: String): Resource<Cliente>
-     suspend fun getClients(): Resource<List<Cliente>>
-     suspend fun updateClient(cliente: Cliente)
-     suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Any>
+     suspend fun getClients(): List<Cliente>?
+     suspend fun getActiveClients(): List<Cliente>?
+     suspend fun getPendingClients(): List<Cliente>?
+     suspend fun updateClient(cliente: Cliente,documentId: String)
+     suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Cliente>
+     val documentID: String
+     fun getDocumentId(): String
 
 
 }

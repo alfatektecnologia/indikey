@@ -1,5 +1,6 @@
 package br.com.alfatek.indikey.data
 
+import android.util.Log
 import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.model.User
 import br.com.alfatek.indikey.util.Resource
@@ -15,6 +16,7 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAuth) : AuthRepository {
 
     private val firebaseFirestore = FirebaseFirestore.getInstance()
+    private var documentId: String = ""
 
     override suspend fun signIn(email: String, password: String): Resource<FirebaseUser> {
        return try {
@@ -73,18 +75,57 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
         }
     }
 
-    override suspend fun getClients(): Resource<List<Cliente>> {
+    override suspend fun getClients(): List<Cliente>? {
         return try {
-
             val snapshot = firebaseFirestore.collection("clientes").get().await()
-            val clientes: List<Cliente> = snapshot.toObjects(Cliente::class.java)
-            Resource.Success(clientes)
+            snapshot.toObjects(Cliente::class.java)
+
+            //Resource.Success(clientes)
         } catch (e: Exception) {
-            e.printStackTrace()
-            Resource.Error(e)
+            println("Error getting documents: $e")
+            null
         }
     }
-    override suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Any> {
+
+    override suspend fun getActiveClients(): List<Cliente>? {
+
+       return try {
+           val snapshot = firebaseFirestore.collection("clientes")
+               .whereEqualTo("isActive",  true)
+               .get()
+               .await()
+           if (snapshot.isEmpty){
+                emptyList()
+           }else{
+              snapshot.toObjects(Cliente::class.java)
+           }
+
+       }catch (e: Exception) {
+           println("Error getting documents: $e")
+           null
+       }
+    }
+
+    override suspend fun getPendingClients(): List<Cliente>? {
+        return try {
+            val snapshot = firebaseFirestore.collection("clientes")
+                .whereEqualTo("isPending",  true)
+                .get()
+                .await()
+            if (snapshot.isEmpty){
+                emptyList()
+            }else{
+                snapshot.toObjects(Cliente::class.java)
+            }
+
+        }catch (e: Exception) {
+            println("Error getting documents: $e")
+            null
+        }
+    }
+
+
+    override suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Cliente> {
         return try {
             val querySnapshot = firebaseFirestore.collection("clientes")
                 .whereEqualTo("cnpj", cnpj)
@@ -94,9 +135,11 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
             if (querySnapshot.isEmpty) {
                 Result.failure(Exception("Client not found with CNPJ: $cnpj"))
             } else {
+                documentId = querySnapshot.documents[0].id
+                Log.d("AuthRepositoryImpl", "getClientByCnpj: $documentId")
                 val client = querySnapshot.documents[0].toObject(Cliente)
                 if (client != null) {
-                    Result.success(client)
+                    Result.success(client) as Result<Cliente>
                 } else {
                     Result.failure(Exception("Error converting document to Client object"))
                 }
@@ -106,9 +149,16 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
         }
     }
 
-    override suspend fun updateClient(cliente: Cliente) {
+    override val documentID: String
+        get() = documentId
+
+    override fun getDocumentId(): String {
+        return documentId
+    }
+
+    override suspend fun updateClient(cliente: Cliente,documentId: String) {
         try {
-            firebaseFirestore.collection("clientes").document(cliente.cnpj).set(cliente).await()
+            firebaseFirestore.collection("clientes").document(documentId).set(cliente).await()
         } catch (e: Exception) {
             e.printStackTrace()
         }

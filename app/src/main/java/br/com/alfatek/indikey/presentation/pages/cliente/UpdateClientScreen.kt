@@ -1,6 +1,7 @@
 package br.com.alfatek.indikey.presentation.pages.cliente
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +19,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,16 +30,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.alfatek.indikey.R
 import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.presentation.pages.dashboard.DashboardViewModel
-import br.com.alfatek.indikey.util.Resource
+import br.com.alfatek.indikey.util.getClientFromSharedPreferences
 import kotlin.system.exitProcess
 
 @Composable
@@ -47,42 +48,23 @@ fun UpdateClientScreen(
     onBackClick: () -> Unit
 
 ) {
-     var client: Cliente = Cliente()
-    LaunchedEffect(Unit) {
 
-            viewModel.cliente.collect {
+    var client= getClientFromSharedPreferences(context = LocalContext.current)
 
-            if (it is Resource.Success) {
-                client = it.result
-                Log.d("UpdateClientScreen", "Client: $client")
-            }
-        }
+    var companyName by remember { mutableStateOf(client?.companyName ?:"") }
+    var email by remember { mutableStateOf(client?.email?:"") }
+    var phoneNumber by remember { mutableStateOf(client?.phoneNumber?:"") }
+    var contactPerson by remember { mutableStateOf(client?.contactPerson?:"") }
 
-    }
+    var cnpj by remember { mutableStateOf(client?.cnpj?:"") }
+    var project by remember { mutableStateOf(client?.project?:"") }
+    var date by remember { mutableStateOf(client?.date?:"") }
+    var isActive by remember { mutableStateOf(client?.isActive?:false) }
+    var isPending by remember { mutableStateOf(client?.isPending?:false) }
+    var referrer by remember { mutableStateOf(client?.referrer?:"") }
+    val context = LocalContext.current
 
 
-
-    var companyName by remember { mutableStateOf(client.companyName ?:"") }
-    var email by remember { mutableStateOf(client.email) }
-    var phoneNumber by remember { mutableStateOf(client.phoneNumber) }
-    var contactPerson by remember { mutableStateOf(client.contactPerson) }
-    var cnpj by remember { mutableStateOf("") }
-    var project by remember { mutableStateOf(client.project) }
-    var date by remember { mutableStateOf(client.date) }
-    var isActive by remember { mutableStateOf(client.isActive) }
-    var isPending by remember { mutableStateOf(client.isPending) }
-    var referrer by remember { mutableStateOf(client.referrer) }
-
-    companyName = client.companyName
-    email = client.email
-    phoneNumber = client.phoneNumber
-    contactPerson = client.contactPerson
-    cnpj = client.cnpj
-    project = client.project
-    date = client.date
-    isActive = client.isActive
-    isPending = client.isPending
-    referrer = client.referrer
 
 
     Scaffold(
@@ -133,13 +115,11 @@ fun UpdateClientScreen(
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = companyName,
-                    onValueChange = { companyName = it },
+                    onValueChange = { companyName = it},
                     label = { Text(stringResource(R.string.razao_social)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
-
-                Text(text = "EMAIL: $email")
 
                 OutlinedTextField(
                     value = email,
@@ -196,6 +176,20 @@ fun UpdateClientScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
+                Row(modifier = Modifier
+                    .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = isActive, onClick = { isActive = !isActive })
+                        Text(stringResource(R.string.ativo))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = isPending, onClick = { isPending = !isPending })
+                        Text(stringResource(R.string.pending_approval))
+                    }
+
+                }
+                Spacer(modifier = Modifier.padding(8.dp))
 
                 Button(
                     onClick = {
@@ -211,48 +205,26 @@ fun UpdateClientScreen(
                             isPending = isPending,
                             referrer = referrer
                         )
-                        // onUpdateClient(updatedClient)
+                        try{
+                            viewModel.updateClient(updatedClient)
+                            Log.d("UpdateClientScreen", "UpdateClientScreen: $updatedClient")
+                            Toast.makeText(context, "Client updated successfully", Toast.LENGTH_SHORT).show()
+                            onBackClick()
+                        }catch (e:Exception){
+                            Log.d("UpdateClientScreen", "UpdateClientScreen: ${e.message}")
+                            Toast.makeText(context, "Error updating client", Toast.LENGTH_SHORT).show()
+
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Update Client")
                 }
                 Spacer(modifier = Modifier.padding(8.dp))
-                Button(
-                    onClick = {
-                        onBackClick()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Back")
-                }
+
             }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun UpdateClientScreenPreview() {
-    val sampleClient = Cliente(
-        companyName = "Client A",
-        email = "clientA@example.com",
-        phoneNumber = "123-456-7890",
-        contactPerson = "John Doe",
-        cnpj = "12.345.678/0001-90",
-        project = "Project X",
-        date = "2023-10-27",
-        isActive = true,
-        isPending = false,
-        referrer = "Referrer 1"
-    )
-//    UpdateClientScreen(
-//        client = sampleClient,
-////        onUpdateClient = { updatedClient ->
-////            println("Updated client: $updatedClient")
-////        },
-//        onBackClick = {
-//            println("Back")
-//        }
-//    )
-}
+

@@ -1,5 +1,7 @@
 package br.com.alfatek.indikey.presentation.pages.dashboard
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,26 +46,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.liveData
 import br.com.alfatek.indikey.R
 import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.util.Resource
+import br.com.alfatek.indikey.util.saveJsonToSharedPreferences
 import br.com.alfatek.indikey.util.validateCnpj
 import kotlin.system.exitProcess
 
 @Composable
-fun DashboardScreen(onClientClick: () -> Unit = {},
-                    onClientListClick: () -> Unit,
-                    onEditClientClick: () -> Unit,
-                    viewModel: DashboardViewModel? = hiltViewModel<DashboardViewModel>()) {
+fun DashboardScreen(
+    onClientClick: () -> Unit = {},
+    onClientListClick: () -> Unit,
+    onEditClientClick: () -> Unit,
+    viewModel: DashboardViewModel? = hiltViewModel<DashboardViewModel>()
+) {
 
     val larguradevise = LocalConfiguration.current.screenWidthDp.dp
     var cnpj by rememberSaveable { mutableStateOf("") }
     var isBoxVisible by remember { mutableStateOf(false) }
     var cliente = viewModel?.resultCliente?.value
-    var clientes by remember { mutableStateOf(emptyList<Cliente>()) }
-    val activeClientes = viewModel?.isClientActive(clientes)
-    val pendingClientes = viewModel?.isClientPending(clientes)
+    var clientes by remember { mutableStateOf(viewModel?.getAllClients()) }
+    var activeClientes by remember { mutableStateOf (viewModel?.getAllClientsActives()) }
+    var pendingClientes by remember { mutableStateOf (viewModel?.getAllClientsPending()) }
     val context = LocalContext.current
+    val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+
+    // val newClients = remember { viewModel?.getClientsViewModel()}
 
     LaunchedEffect(Unit) {
         viewModel?.clientes?.collect {
@@ -71,6 +81,21 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
             }
         }
     }
+    LaunchedEffect(Unit) {
+        viewModel?.activeClientes?.collect {
+            if (it != null) {
+                activeClientes = it
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        viewModel?.pendingClientes?.collect {
+            if (it != null) {
+                pendingClientes = it
+            }
+        }
+    }
+
 
     LaunchedEffect(Unit) {
         viewModel?.cliente?.collect {
@@ -92,21 +117,27 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState(0))
                 //.background(Color(0xFF1A1A1A))
-                .padding(innerPadding))
+                .padding(innerPadding)
+        )
         {
             //topo->actionbar
-            Box (modifier = Modifier
-                .fillMaxWidth()
-                //.border(width = 2.dp, color = Color.Black, shape = MaterialTheme.shapes.medium)
-                .background(Color(0xFF020D4D)) // Purple 500
-                .height(100.dp),
-                contentAlignment = Alignment.Center,)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    //.border(width = 2.dp, color = Color.Black, shape = MaterialTheme.shapes.medium)
+                    .background(Color(0xFF020D4D)) // Purple 500
+                    .height(100.dp),
+                contentAlignment = Alignment.Center,
+            )
             {
-                Row(horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically,) {
-                    Column (
-                        modifier = Modifier.width(larguradevise/2 + 50.dp),
-                        horizontalAlignment = Alignment.End){
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.width(larguradevise / 2 + 50.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
                         Text(
                             text = stringResource(R.string.painel),
                             style = MaterialTheme.typography.headlineLarge,
@@ -114,9 +145,11 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
                             color = Color.White
                         )
                     }
-                    Box(modifier = Modifier
-                        .fillMaxWidth(),
-                        contentAlignment = Alignment.CenterEnd) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
                         Icon(
                             painterResource(R.drawable.logout_white), contentDescription = null,
                             tint = Color.White,
@@ -131,23 +164,28 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
                 }
             }
             //Pesquisar
-            Box (modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .border(width = 1.dp, color = Color.Black, shape = MaterialTheme.shapes.medium)
-                //.background(Color(0xFF243493)) // Purple 500
-                .height(100.dp),
-                contentAlignment = Alignment.Center,)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .border(width = 1.dp, color = Color.Black, shape = MaterialTheme.shapes.medium)
+                    //.background(Color(0xFF243493)) // Purple 500
+                    .height(100.dp),
+                contentAlignment = Alignment.Center,
+            )
             {
                 Column {
                     OutlinedTextField(
                         value = cnpj,
-                        onValueChange = {cnpj = it},
+                        onValueChange = { cnpj = it },
                         singleLine = true,
                         maxLines = 1,
                         supportingText = { Text("Ex.: 00.000.000/0000-00") },
-                        label = { Text(text = stringResource(R.string.search),
-                           ) },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.search),
+                            )
+                        },
                         modifier = Modifier
                             .padding(start = 8.dp, end = 8.dp)
                             .fillMaxWidth(),
@@ -155,9 +193,14 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
                             Icon(Icons.Filled.Search,
                                 contentDescription = null,
                                 modifier = Modifier.clickable {
-                                    if (validateCnpj(context,cnpj)) {
+                                    if (validateCnpj(context, cnpj)) {
+
+                                        with(sharedPreferences.edit()) {
+                                            putString("cnpj_key", cnpj)
+                                            apply()
+                                        }
                                         viewModel?.getClient(cnpj)
-                                    }else{
+                                    } else {
                                         isBoxVisible = false
                                     }
                                 }
@@ -171,10 +214,12 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
             }
 
             //Clientes
-            Box (modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .border(width = 1.dp, color = Color.Black, shape = MaterialTheme.shapes.medium) )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .border(width = 1.dp, color = Color.Black, shape = MaterialTheme.shapes.medium)
+            )
             {
                 Row(
                     modifier = Modifier
@@ -196,101 +241,114 @@ fun DashboardScreen(onClientClick: () -> Unit = {},
                         //colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE)),
                         modifier = Modifier.padding(bottom = 16.dp)
                     ) {
-                        Text(text = stringResource(R.string.add_client),
+                        Text(
+                            text = stringResource(R.string.add_client),
                             modifier = Modifier.clickable { onClientClick() },
-                            color = Color.White)
+                            color = Color.White
+                        )
                     }
                 }
             }
 
-if (isBoxVisible) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 1.dp,
-                color = Color.Black,
-                shape = MaterialTheme.shapes.medium
-            )
-    )
-    {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-                .clickable(onClick = { onEditClientClick() }),
-        )
-        {
-
-            Column(modifier = Modifier.padding(8.dp)) {
-                Row(
+            if (isBoxVisible) {
+                saveJsonToSharedPreferences(context, "cliente_key", cliente!!)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column {
-                        Text(
-                            text = cliente?.contactPerson ?: "Contato",
+                        .padding(16.dp)
+                        .border(
+                            width = 1.dp,
                             color = Color.Black,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                            shape = MaterialTheme.shapes.medium
                         )
-                        Text(
-                            text = cliente?.companyName ?: "Razão social",
-                            color = Color.Gray
-                        )
-                        Text(text = cliente?.email ?: "Email", color = Color.Gray)
-                        Text(text = cliente?.phoneNumber ?: "Fone", color = Color.Gray)
-                        Text(
-                            text = cliente?.referrer ?: "Indicado por:",
-                            color = Color.Gray
-                        )
+                )
+                {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .clickable(onClick = { onEditClientClick() }),
+                    )
+                    {
+
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.Top,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column {
+                                    Text(
+                                        text = cliente?.contactPerson ?: "Contato",
+                                        color = Color.Black,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = cliente?.companyName ?: "Razão social",
+                                        color = Color.Gray
+                                    )
+                                    Text(text = cliente?.email ?: "Email", color = Color.Gray)
+                                    Text(text = cliente?.phoneNumber ?: "Fone", color = Color.Gray)
+                                    Text(
+                                        text = cliente?.referrer ?: "Indicado por:",
+                                        color = Color.Gray
+                                    )
+                                }
+
+                            }
+
+                        }
+
                     }
-
                 }
-
             }
-
-        }
-    }
-}
 
             Row(
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth())
+                modifier = Modifier.fillMaxWidth()
+            )
             {
-                Box (modifier = Modifier
-                    .height(200.dp)
-                    .width(200.dp)
-                    .padding(16.dp)
-                    .fillMaxSize()){
+                Box(
+                    modifier = Modifier
+                        .height(200.dp)
+                        .width(200.dp)
+                        .padding(16.dp)
+                        .fillMaxSize()
+                ) {
                     Card(modifier = Modifier
-                        .clickable { onClientListClick() }
-                        .fillMaxSize()){
-                        Column(modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize(),
+                        .clickable {
+                            onClientListClick()
+                        }
+                        .fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         )
-                         {
-                             Icon(
-                                 painterResource(R.drawable.people_alt_24),
-                                 contentDescription = null, tint = Color.Blue
-                             )
-                             Spacer(modifier = Modifier.height(8.dp))
-                             Text(
-                                 text = stringResource(R.string.total_clients),
-                                 color = Color.Gray,
+                        {
+                            Icon(
+                                painterResource(R.drawable.people_alt_24),
+                                contentDescription = null, tint = Color.Blue
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.total_clients),
+                                color = Color.Gray,
 
-                             )
-                             Spacer(modifier = Modifier.height(8.dp))
-                             Text(text = clientes.size.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                                )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = clientes?.size.toString(),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
                     }
@@ -301,14 +359,16 @@ if (isBoxVisible) {
                         .width(200.dp)
                         .padding(16.dp)
                         .fillMaxSize()
-                       // .align(Alignment.CenterHorizontally)
+                    // .align(Alignment.CenterHorizontally)
                 ) {
                     Card(modifier = Modifier.fillMaxSize()) {
-                        Column(modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize(),
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center) {
+                            verticalArrangement = Arrangement.Center
+                        ) {
                             Icon(
                                 painterResource(R.drawable.check_circle_24),
                                 contentDescription = null, tint = Color.Green
@@ -316,93 +376,114 @@ if (isBoxVisible) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(text = stringResource(R.string.active_clients), color = Color.Gray)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = activeClientes?.toString() ?: "0", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = activeClientes?.size.toString(),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
             }
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box (modifier = Modifier
-                    .height(200.dp)
-                    .width(200.dp)
-                    .padding(16.dp)
-                    .fillMaxSize()){
-                    Card(modifier = Modifier.fillMaxSize()){
-                        Column(modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center) {
-                            Icon(
-                                painterResource(R.drawable.data_exploration_24),
-                                contentDescription = null, tint = Color.Cyan
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = stringResource(R.string.new_this_month), color = Color.Gray)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = clientes.size.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        }
 
-                    }
-                }
-                Box (modifier = Modifier
-                    .height(200.dp)
-                    .width(200.dp)
-                    .padding(16.dp)
-                    .fillMaxSize()){
-                    Card(modifier = Modifier.fillMaxSize()){
-                        Column(modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center) {
-                            Icon(
-                                painterResource(R.drawable.pending_actions_24),
-                                contentDescription = null, tint = Color.Yellow
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = stringResource(R.string.pending_approval), color = Color.Gray)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = pendingClientes?.toString()?:"0", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-@Composable
-fun StatisticCard(label: String, value: String) {
-    Card(
-        modifier = Modifier
-           // .weight(1f)
-            .padding(8.dp),
-        //elevation = 4.dp
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+        Row(
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = label, color = Color.Gray)
-            Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier
+                    .height(200.dp)
+                    .width(200.dp)
+                    .padding(16.dp)
+                    .fillMaxSize()
+            ) {
+                Card(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.data_exploration_24),
+                            contentDescription = null, tint = Color.Cyan
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.new_this_month), color = Color.Gray)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = clientes?.size.toString(),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .height(200.dp)
+                    .width(200.dp)
+                    .padding(16.dp)
+                    .fillMaxSize()
+            ) {
+                Card(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.pending_actions_24),
+                            contentDescription = null, tint = Color.Yellow
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.pending_approval), color = Color.Gray)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = pendingClientes?.size.toString(),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold)}
+                        }
+                    }
+                }
+            }
         }
     }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun ShowDashboardScreen(modifier: Modifier = Modifier) {
-    DashboardScreen(
-        onClientClick = {},
-        onClientListClick = {},
-        onEditClientClick = {},
-        null
-    )
-}
+
+
+    @Composable
+    fun StatisticCard(label: String, value: String) {
+        Card(
+            modifier = Modifier
+                // .weight(1f)
+                .padding(8.dp),
+            //elevation = 4.dp
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(text = label, color = Color.Gray)
+                Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+
+    @Preview(showBackground = true)
+    @Composable
+    fun ShowDashboardScreen(modifier: Modifier = Modifier) {
+        DashboardScreen(
+            onClientClick = {},
+            onClientListClick = {},
+            onEditClientClick = {},
+            null
+        )
+    }

@@ -28,4 +28,5 @@
     <string name="editar">Editar cliente</string>
     <string name="indicacao">Indicado por:</string>
     <string name="date">Data</string>
+    <string name="ativo">Cliente Ativo</string>
 </resources>

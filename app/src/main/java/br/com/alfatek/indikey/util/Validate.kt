@@ -3,6 +3,8 @@ package br.com.alfatek.indikey.util
 import android.content.Context
 import android.widget.Toast
 
+
+
     fun validateEmail(context: Context, email: String): Boolean {
         return if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()){
             true

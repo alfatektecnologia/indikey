@@ -1,5 +1,6 @@
 package br.com.alfatek.indikey.presentation.pages.cliente
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -45,7 +44,7 @@ import kotlin.system.exitProcess
 fun ClientListScreen(
     onBackClick: () -> Unit,
     viewModel: DashboardViewModel? = hiltViewModel()) {
-    var clientes by remember { mutableStateOf(emptyList<Cliente>()) }
+    var clientes by remember { mutableStateOf(viewModel?.getAllClients()) }
 
     LaunchedEffect(Unit) {
         viewModel?.clientes?.collect {
@@ -54,6 +53,8 @@ fun ClientListScreen(
             }
         }
     }
+
+    Log.d("ClientListScreen", "clientes: $clientes")
 
 
     Scaffold (Modifier.fillMaxSize()){innerPadding ->
@@ -97,7 +98,9 @@ fun ClientListScreen(
                 }
             }
             Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-                ClientList(clientes) { }
+                if (clientes != null) {
+                    ClientList(clientes.orEmpty()) { }
+                }
             }
         }
     }
@@ -169,49 +172,49 @@ fun ClientList(clients: List<Cliente>, onItemClick: (Cliente) -> Unit) {
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun ClientListPreview() {
-    val sampleClients = listOf(
-        Cliente(
-            companyName = "Client A",
-            email = "clientA@example.com",
-            phoneNumber = "123-456-7890",
-            contactPerson = "John Doe",
-            cnpj = "12.345.678/0001-90",
-            project = "Project X",
-            date = "2023-10-27",
-            isActive = true,
-            isPending = false,
-            referrer = "Referrer 1"
-        ),
-        Cliente(
-            companyName = "Client B",
-            email = "clientB@example.com",
-            phoneNumber = "987-654-3210",
-            contactPerson = "Jane Smith",
-            cnpj = "98.765.432/0001-09",
-            project = "Project Y",
-            date = "2023-10-26",
-            isActive = false,
-            isPending = true,
-            referrer = "Referrer 2"
-        ),
-        Cliente(
-            companyName = "Client C",
-            email = "clientC@example.com",
-            phoneNumber = "555-123-4567",
-            contactPerson = "Peter Jones",
-            cnpj = "55.555.555/0001-55",
-            project = "Project Z",
-            date = "2023-10-25",
-            isActive = true,
-            isPending = true,
-            referrer = "Referrer 3"
-        )
-    )
-    ClientList(clients = sampleClients) { client ->
-        println("Clicked on: ${client.companyName}")
-    }
-}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun ClientListPreview() {
+//    val sampleClients = listOf(
+//        Cliente(
+//            companyName = "Client A",
+//            email = "clientA@example.com",
+//            phoneNumber = "123-456-7890",
+//            contactPerson = "John Doe",
+//            cnpj = "12.345.678/0001-90",
+//            project = "Project X",
+//            date = "2023-10-27",
+//            isActive = true,
+//            isPending = false,
+//            referrer = "Referrer 1"
+//        ),
+//        Cliente(
+//            companyName = "Client B",
+//            email = "clientB@example.com",
+//            phoneNumber = "987-654-3210",
+//            contactPerson = "Jane Smith",
+//            cnpj = "98.765.432/0001-09",
+//            project = "Project Y",
+//            date = "2023-10-26",
+//            isActive = false,
+//            isPending = true,
+//            referrer = "Referrer 2"
+//        ),
+//        Cliente(
+//            companyName = "Client C",
+//            email = "clientC@example.com",
+//            phoneNumber = "555-123-4567",
+//            contactPerson = "Peter Jones",
+//            cnpj = "55.555.555/0001-55",
+//            project = "Project Z",
+//            date = "2023-10-25",
+//            isActive = true,
+//            isPending = true,
+//            referrer = "Referrer 3"
+//        )
+//    )
+//    ClientList(clients = sampleClients) { client ->
+//        println("Clicked on: ${client.companyName}")
+//    }
+//}
