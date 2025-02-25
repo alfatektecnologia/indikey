@@ -14,5 +14,7 @@ data class Cliente(
     var isActive: Boolean = true ,
     var isPending: Boolean = true ,
     var referrer: String = "",
+    var documentId: String = ""
+
     )
 

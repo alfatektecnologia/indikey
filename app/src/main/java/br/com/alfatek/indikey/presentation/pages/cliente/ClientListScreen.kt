@@ -1,5 +1,6 @@
 package br.com.alfatek.indikey.presentation.pages.cliente
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,27 +31,58 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.alfatek.indikey.R
 import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.presentation.pages.dashboard.DashboardViewModel
+import br.com.alfatek.indikey.util.getIsAdminFromSharedPreferences
+import br.com.alfatek.indikey.util.saveJsonToSharedPreferences
 import kotlin.system.exitProcess
 
 @Composable
 fun ClientListScreen(
-    onBackClick: () -> Unit,
+    onBackClick: () -> Unit, onClick: () -> Unit, onItemClick: (Cliente) -> Unit,
     viewModel: DashboardViewModel? = hiltViewModel()) {
-    var clientes by remember { mutableStateOf(viewModel?.getAllClients()) }
+    val context = LocalContext.current
+    var clientes by remember { mutableStateOf(viewModel?.getAllClients(
+        getIsAdminFromSharedPreferences(context)
+    )) }
+    var activeClientes by remember { mutableStateOf (viewModel?.activeClientes?.value) }
+    var pendingClientes by remember { mutableStateOf (viewModel?.pendingClientes?.value) }
+
+    val todosState = remember { mutableStateOf(true) }
+    val activesState = remember { mutableStateOf(false) }
+    val pendingState = remember { mutableStateOf(false) }
+    val searchType = remember { mutableStateOf("Todos") }
+    val tabela = remember { mutableStateOf(clientes) }
+    val texto = remember { mutableStateOf("N/A") }
+
+
+    val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
 
     LaunchedEffect(Unit) {
         viewModel?.clientes?.collect {
             if (it != null) {
                 clientes = it
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        viewModel?.activeClientes?.collect {
+            if (it != null) {
+                activeClientes = it
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        viewModel?.pendingClientes?.collect {
+            if (it != null) {
+                pendingClientes = it
             }
         }
     }
@@ -97,10 +130,103 @@ fun ClientListScreen(
                     )
                 }
             }
-            Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-                if (clientes != null) {
-                    ClientList(clientes.orEmpty()) { }
+            Column(modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize()) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        RadioButton(
+                            selected = todosState.value,
+                            onClick = {
+                                todosState.value = !todosState.value
+                                activesState.value = false
+                                pendingState.value = false
+                                searchType.value = "Todos"
+                               // texto.value = "N/A"
+                            }
+                        )
+                        Text(
+                            text = "Todos",
+                            style = MaterialTheme.typography.bodyLarge,
+
+                            )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        RadioButton(
+                            selected = activesState.value,
+                            onClick = {
+                                activesState.value = !activesState.value
+                                todosState.value = false
+                                pendingState.value = false
+                                searchType.value = "Actives"
+                               // texto.value = "N/A"
+                            }
+                        )
+                        Text(
+                            text = "Ativos",
+                            style = MaterialTheme.typography.bodyLarge,
+
+                            )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        RadioButton(
+                            selected = pendingState.value,
+                            onClick = {
+                                pendingState.value = !pendingState.value
+                                todosState.value = false
+                                activesState.value = false
+                                searchType.value = "Pending"
+                               // texto.value = "N/A"
+                            }
+                        )
+                        Text(
+                            text = "Pendentes",
+                            style = MaterialTheme.typography.bodyLarge,
+
+                            )
+                    }
+
+
                 }
+
+                if (searchType.value == "Todos") {
+                   tabela.value = clientes.orEmpty()
+                } else if (searchType.value == "Actives") {
+                    tabela.value = activeClientes.orEmpty()
+                } else {
+                    tabela.value = pendingClientes.orEmpty()
+                }
+
+
+                    ClientList(tabela.value!!, onItemClick = {
+                        saveJsonToSharedPreferences(context, "cliente_key", it, Cliente.serializer())
+                        Log.d("ClientListScreen", "ClientListScreen: $it")
+                        viewModel?.getClient(it.cnpj)
+
+                        onItemClick(it)
+                    })
+
+
+
+
             }
         }
     }
@@ -108,6 +234,7 @@ fun ClientListScreen(
 
 @Composable
 fun ClientListItem(client: Cliente, onClick: () -> Unit) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,11 +254,11 @@ fun ClientListItem(client: Cliente, onClick: () -> Unit) {
                 Text(text = client.cnpj)
             }
             Row {
-                Text(text = "Contact: ", fontWeight = FontWeight.Bold)
+                Text(text = "Contato: ", fontWeight = FontWeight.Bold)
                 Text(text = client.contactPerson)
             }
             Row {
-                Text(text = "Phone: ", fontWeight = FontWeight.Bold)
+                Text(text = "Fone: ", fontWeight = FontWeight.Bold)
                 Text(text = client.phoneNumber)
             }
             Row {
@@ -139,23 +266,23 @@ fun ClientListItem(client: Cliente, onClick: () -> Unit) {
                 Text(text = client.email)
             }
             Row {
-                Text(text = "Project: ", fontWeight = FontWeight.Bold)
+                Text(text = "Projeto: ", fontWeight = FontWeight.Bold)
                 Text(text = client.project)
             }
             Row {
-                Text(text = "Date: ", fontWeight = FontWeight.Bold)
+                Text(text = "Data: ", fontWeight = FontWeight.Bold)
                 Text(text = client.date)
             }
             Row {
-                Text(text = "Is Active: ", fontWeight = FontWeight.Bold)
+                Text(text = "Ativo?: ", fontWeight = FontWeight.Bold)
                 Text(text = client.isActive.toString())
             }
             Row {
-                Text(text = "Is Pending: ", fontWeight = FontWeight.Bold)
+                Text(text = "Pendente?: ", fontWeight = FontWeight.Bold)
                 Text(text = client.isPending.toString())
             }
             Row {
-                Text(text = "Referrer: ", fontWeight = FontWeight.Bold)
+                Text(text = "Indicado por: ", fontWeight = FontWeight.Bold)
                 Text(text = client.referrer)
             }
         }

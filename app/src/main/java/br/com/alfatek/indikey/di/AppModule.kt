@@ -1,6 +1,7 @@
 package br.com.alfatek.indikey.di
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
 import br.com.alfatek.indikey.data.AuthRepository
 import br.com.alfatek.indikey.data.AuthRepositoryImpl
@@ -10,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -38,5 +40,12 @@ object AppModule {
     fun provideClientDao(appDatabase: AppDatabase): ClientDao {
         return appDatabase.clientDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideContext(@ApplicationContext context: Context): Context {
+        return context
+    }
+
 
 }

@@ -8,8 +8,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -39,23 +37,38 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
         }
     }
 
-    override fun getUsers(): Flow<Resource<List<User>>> {
+    override suspend fun getUsers(): List<User>? {
+        return try {
+            val snapshot = firebaseFirestore.collection("users")
+                .get()
+                .await()
+            snapshot.toObjects(User::class.java)
 
-        return flow {
-            emit(Resource.Loading)
-            try {
-                val snapshot = firebaseFirestore.collection("users").get().await()
-                val users = snapshot.toObjects(User::class.java)
-                emit(Resource.Success(users))
-                } catch (e: Exception) {
-                emit(Resource.Error(e))
-            }
-
+        } catch (e: Exception) {
+            println("Error getting documents: $e")
+            null
         }
+
     }
 
     override suspend fun<T : Any> saveToFirestore(collection:String, data: T) {
         try {
+
+            val result = firebaseFirestore.collection(collection).add(data).await()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
+    override suspend fun saveClient2Firestore(collection:String, data: Cliente) {
+        try {
+            val documentRef = firebaseFirestore.collection(collection).document()
+            val documentId = documentRef.id
+            Log.d("AuthRepositoryImpl", "saveClient2Firestore: $documentId")
+            data.documentId = documentId
+
             val result = firebaseFirestore.collection(collection).add(data).await()
 
         } catch (e: Exception) {
@@ -75,9 +88,18 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
         }
     }
 
-    override suspend fun getClients(): List<Cliente>? {
+    override suspend fun getClients(isAdmin: Boolean): List<Cliente>? {
         return try {
-            val snapshot = firebaseFirestore.collection("clientes").get().await()
+            val snapshot = if (!isAdmin) {
+                firebaseFirestore.collection("clientes")
+                    .whereEqualTo("referrer", currentUser?.displayName)
+                    .get()
+                    .await()
+            } else {
+                firebaseFirestore.collection("clientes")
+                    .get()
+                    .await()
+            }
             snapshot.toObjects(Cliente::class.java)
 
             //Resource.Success(clientes)
@@ -146,6 +168,31 @@ class AuthRepositoryImpl @Inject constructor(private val firebaseAuth:FirebaseAu
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun getUserById(userId: String): User? {
+        return try {
+            val snapshot = firebaseFirestore.collection("users").get().await()
+
+            if (snapshot?.isEmpty == false) {
+                snapshot.toObjects(User::class.java).firstOrNull { it.userId == userId }
+            } else {
+                null
+            }
+
+
+        }catch (e: Exception) {
+            println("Error getting documents: $e")
+            null
+        }
+    }
+
+    override suspend fun deleteDocument(documentId: String,collection: String) {
+        try {
+            firebaseFirestore.collection(collection).document(documentId).delete().await()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

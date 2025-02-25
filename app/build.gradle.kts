@@ -8,7 +8,7 @@ plugins {
     id("dagger.hilt.android.plugin")
     //id("com.google.devtools.ksp") version "2.0.20-1.0.24"
     alias(libs.plugins.kotlinx.serialization)
-
+    id("com.google.firebase.crashlytics")
 }
 
 
@@ -101,7 +101,7 @@ dependencies {
     testImplementation ("com.google.dagger:hilt-android-testing:2.55")
     kaptTest ("com.google.dagger:hilt-compiler:2.55")
 
-
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
 
 
     implementation (libs.androidx.hilt.navigation.compose.v120)

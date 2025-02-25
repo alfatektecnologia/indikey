@@ -1,5 +1,6 @@
 package br.com.alfatek.indikey.presentation.pages.auth
 
+import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -79,6 +80,8 @@ fun RegisterUserScreen(
     var description by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
     val registerFlow = viewModel?.registerFlow?.collectAsState()
+
+
 
     // Focus management
     val focusManager = LocalFocusManager.current

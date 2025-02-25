@@ -47,11 +47,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import br.com.alfatek.indikey.R
 import br.com.alfatek.indikey.model.Cliente
+import br.com.alfatek.indikey.model.User
 import br.com.alfatek.indikey.util.Resource
+import br.com.alfatek.indikey.util.getIsAdminFromSharedPreferences
 import br.com.alfatek.indikey.util.saveJsonToSharedPreferences
 import br.com.alfatek.indikey.util.validateCnpj
+import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
 
 @Composable
@@ -61,18 +65,44 @@ fun DashboardScreen(
     onEditClientClick: () -> Unit,
     viewModel: DashboardViewModel? = hiltViewModel<DashboardViewModel>()
 ) {
-
+    val context = LocalContext.current
     val larguradevise = LocalConfiguration.current.screenWidthDp.dp
     var cnpj by rememberSaveable { mutableStateOf("") }
     var isBoxVisible by remember { mutableStateOf(false) }
     var cliente = viewModel?.resultCliente?.value
-    var clientes by remember { mutableStateOf(viewModel?.getAllClients()) }
-    var activeClientes by remember { mutableStateOf (viewModel?.getAllClientsActives()) }
-    var pendingClientes by remember { mutableStateOf (viewModel?.getAllClientsPending()) }
-    val context = LocalContext.current
-    val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    var clientes by remember { mutableStateOf(viewModel?.getAllClients(
+        getIsAdminFromSharedPreferences(context)
+    )) }
+    var activeClientes by remember { mutableStateOf (viewModel?.activeClientes?.value) }
+    var pendingClientes by remember { mutableStateOf (viewModel?.pendingClientes?.value) }
 
-    // val newClients = remember { viewModel?.getClientsViewModel()}
+    val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    var usuarios by remember { mutableStateOf(viewModel?.getAllUsers()) }
+
+    val userById = remember { mutableStateOf<User?>(viewModel?.users) }
+
+    val isUserAdmin  = remember { mutableStateOf(viewModel?.isUsuarioAdmin()) }
+    val isAdmin = remember { mutableStateOf(getIsAdminFromSharedPreferences(context)) }
+    Log.d("FromSharedPreferences", "isAdmin: $isAdmin")
+
+    LaunchedEffect(Unit) {
+        viewModel?.usuarios?.collect {
+            if (it != null) {
+                usuarios = it
+
+            }
+        }
+    }
+
+        LaunchedEffect(Unit) {
+            viewModel?.users?.let {
+                isUserAdmin.value = viewModel.isUsuarioAdmin()
+                if(!isAdmin.value)sharedPreferences.edit().putBoolean("isAdmin", isUserAdmin.value ?: false)
+                    .apply()
+            }
+        }
+
+
 
     LaunchedEffect(Unit) {
         viewModel?.clientes?.collect {
@@ -106,7 +136,6 @@ fun DashboardScreen(
         }
 
     }
-
 
 
     Scaffold(modifier = Modifier.fillMaxSize())
@@ -201,6 +230,7 @@ fun DashboardScreen(
                                         }
                                         viewModel?.getClient(cnpj)
                                     } else {
+                                       // throw RuntimeException("Test Crash") // Force a crash
                                         isBoxVisible = false
                                     }
                                 }
@@ -251,7 +281,7 @@ fun DashboardScreen(
             }
 
             if (isBoxVisible) {
-                saveJsonToSharedPreferences(context, "cliente_key", cliente!!)
+                saveJsonToSharedPreferences(context, "cliente_key", cliente!!, Cliente.serializer())
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

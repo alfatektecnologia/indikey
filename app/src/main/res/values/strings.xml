@@ -15,7 +15,7 @@
     <string name="search">Pesquisar CNPJ</string>
     <string name="client_list">Clientes</string>
     <string name="add_client">Adicionar</string>
-    <string name="new_this_month">Novos</string>
+    <string name="new_this_month">Desse mês</string>
     <string name="pending_approval">Pendentes</string>
     <string name="active_clients">Ativos</string>
     <string name="total_clients">Total</string>
@@ -29,4 +29,7 @@
     <string name="indicacao">Indicado por:</string>
     <string name="date">Data</string>
     <string name="ativo">Cliente Ativo</string>
+    <string name="confirmar">Confirmar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="update_client">Atualizar</string>
 </resources>

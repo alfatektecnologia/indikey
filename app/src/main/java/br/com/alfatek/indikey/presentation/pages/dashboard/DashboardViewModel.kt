@@ -3,27 +3,25 @@ package br.com.alfatek.indikey.presentation.pages.dashboard
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.alfatek.indikey.data.AuthRepository
 import br.com.alfatek.indikey.model.Cliente
+import br.com.alfatek.indikey.model.User
 import br.com.alfatek.indikey.util.Resource
+import br.com.alfatek.indikey.util.getIsAdminFromSharedPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
 ) : ViewModel() {
     private val _cliente = MutableStateFlow<Resource<Cliente>?>(null)
     val cliente = _cliente.asStateFlow<Resource<Cliente>?>()
@@ -34,18 +32,47 @@ class DashboardViewModel @Inject constructor(
     val _pendingClientes = MutableStateFlow<List<Cliente>?>(emptyList())
     val activeClientes = _activeClientes.asStateFlow()
     val pendingClientes = _pendingClientes.asStateFlow()
+    val userId = repository.currentUser?.uid
 
 
-    fun getAllClients(): List<Cliente>? {
-        var list: List<Cliente>? = null
+
+
+
+    private val _usuarios = MutableStateFlow<List<User>?>(emptyList())
+    val usuarios = _usuarios.asStateFlow()
+
+    var users: User? = null
+
+    fun getAllUsers(): List<User>? {
+        var list: List<User>? = null
+        // Log.d("DashboardViewModel", "Admin: $isAdmin")
         viewModelScope.launch {
-            repository.getClients().let { resource ->
+            repository.getUsers().let { resource ->
+                _usuarios.value = resource
+                list = resource
+
+                // Log.d("DashboardViewModel", "getAllClients: $list")
+                Log.d("DashboardViewModel", "getAllUsers: ${resource?.size}")
+
+            }
+            return@launch
+        }
+        return list
+
+    }
+
+    fun getAllClients(isAdmin: Boolean): List<Cliente>? {
+        var list: List<Cliente>? = null
+       // Log.d("DashboardViewModel", "Admin: $isAdmin")
+        viewModelScope.launch {
+            repository.getClients(isAdmin).let { resource ->
                 _clientes.value = resource
                 list = resource
                 _activeClientes.value = getActiveClients(list!!)
                 _pendingClientes.value = getPendingClients(list!!)
-                Log.d("DashboardViewModel", "getAllClients: $list")
-                Log.d("DashboardViewModel", "getAllClients: ${resource?.size}")
+                getAllUsers()
+                Log.d("DashboardViewModel", "isAdmim: ${isUsuarioAdmin()}")
+                //Log.d("DashboardViewModel", "getAllClients: ${resource?.size}")
 
             }
             return@launch
@@ -53,37 +80,12 @@ class DashboardViewModel @Inject constructor(
         return list
 
     }
-    fun getAllClientsActives(): List<Cliente>? {
-        var list: List<Cliente>? = null
-        viewModelScope.launch {
-            repository.getActiveClients().let { resource ->
-                _activeClientes.value = resource
-                list = resource
-                Log.d("DashboardViewModel", "getAllClientsActives: $list")
-                Log.d("DashboardViewModel", "getSize: ${resource?.size}")
 
-            }
-            return@launch
-        }
-        return list
-
-    }
-    fun getAllClientsPending(): List<Cliente>? {
-        var list: List<Cliente>? = null
-        viewModelScope.launch {
-            repository.getPendingClients().let { resource ->
-                _pendingClientes.value = resource
-                list = resource
-                Log.d("DashboardViewModel", "getAllClientsPending: $list")
-                Log.d("DashboardViewModel", "getSize: ${resource?.size}")
-            }
-            return@launch
-        }
-        return list
+    fun isUsuarioAdmin(): Boolean {
+        return getUsuarioById(usuarios.value!!,userId!!)?.isAdmin ?: false
     }
 
-
-    private fun getDocumentoID(): String {
+    fun getDocumentoID(): String {
         return repository.getDocumentId()
     }
 
@@ -106,6 +108,9 @@ class DashboardViewModel @Inject constructor(
         }
 
     }
+    fun deleteDocument(documentoId: String,collection: String) = viewModelScope.launch {
+        repository.deleteDocument(documentoId,collection)
+    }
 
     fun checkClient(cnpj: String): Boolean {
         var result: Boolean = false
@@ -127,6 +132,10 @@ class DashboardViewModel @Inject constructor(
         return clientes.filter { it.isPending }
     }
 
+    fun getUsuarioById(usuarios: List<User>, userId: String): User? {
+        return usuarios.firstOrNull { it.userId == userId }
+    }
+
     fun onCnpjClick(cnpj: String, context: Context): Boolean {
         if (!checkClient(cnpj)) {
             Toast.makeText(
@@ -145,10 +154,10 @@ class DashboardViewModel @Inject constructor(
 
 
     init {
+
         viewModelScope.launch {
-            getAllClients()
-            getAllClientsActives()
-            getAllClientsPending()
+            isUsuarioAdmin()
+
         }
 
     }

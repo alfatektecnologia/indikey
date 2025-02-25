@@ -1,5 +1,6 @@
 package br.com.alfatek.indikey.presentation.pages.cliente
 
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -13,16 +14,33 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +58,12 @@ import br.com.alfatek.indikey.R
 import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.presentation.pages.dashboard.DashboardViewModel
 import br.com.alfatek.indikey.util.getClientFromSharedPreferences
+import br.com.alfatek.indikey.util.getIsAdminFromSharedPreferences
+import java.util.Locale
 import kotlin.system.exitProcess
+import androidx.compose.material3.AlertDialog as AlertDialog1
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateClientScreen(
     viewModel: DashboardViewModel = hiltViewModel<DashboardViewModel>(),
@@ -55,7 +77,6 @@ fun UpdateClientScreen(
     var email by remember { mutableStateOf(client?.email?:"") }
     var phoneNumber by remember { mutableStateOf(client?.phoneNumber?:"") }
     var contactPerson by remember { mutableStateOf(client?.contactPerson?:"") }
-
     var cnpj by remember { mutableStateOf(client?.cnpj?:"") }
     var project by remember { mutableStateOf(client?.project?:"") }
     var date by remember { mutableStateOf(client?.date?:"") }
@@ -64,12 +85,29 @@ fun UpdateClientScreen(
     var referrer by remember { mutableStateOf(client?.referrer?:"") }
     val context = LocalContext.current
 
+    val documentoId = viewModel.getDocumentoID()
+    var usuarios by remember { mutableStateOf(viewModel.getAllUsers()) }
+    val isUsuarioAdmin by remember { mutableStateOf(getIsAdminFromSharedPreferences(context)) }
 
+    var expanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val openDialog = remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.usuarios.collect {
+            if (it != null) {
+                usuarios = it
+
+            }
+        }
+    }
+
+    Log.d("UpdateClientScreen", "UpdateClientScreen: $usuarios")
 
     Scaffold(
         Modifier.fillMaxSize()
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,12 +151,95 @@ fun UpdateClientScreen(
                 }
             }
             Column(modifier = Modifier.padding(16.dp)) {
-                OutlinedTextField(
-                    value = companyName,
-                    onValueChange = { companyName = it},
-                    label = { Text(stringResource(R.string.razao_social)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (openDialog.value) {
+                    BasicAlertDialog(onDismissRequest = {
+
+                        openDialog.value = false
+                    }
+                    )
+                    {
+                        Surface(
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .wrapContentHeight(),
+                            shape = MaterialTheme.shapes.large,
+                            color = Color.LightGray,
+                            tonalElevation = AlertDialogDefaults.TonalElevation
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text =
+                                    "Deseja realmente deletar esse cliente?",
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceBetween,verticalAlignment = Alignment.CenterVertically) {
+                                    Button(
+                                        colors = ButtonColors( containerColor = Color.Red, contentColor = Color.White, disabledContainerColor = Color.Red, disabledContentColor = Color.White),
+                                        onClick = {
+                                            openDialog.value = false
+                                        },
+                                        //modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Text("Cancelar")
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            viewModel.deleteDocument(
+                                                documentoId,
+                                                "clientes"
+                                            )
+                                            Toast.makeText(
+                                                context,
+                                                "Cliente deletado com sucesso",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            openDialog.value = false
+                                        },
+                                        //modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Text("Confirmar")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                if (isUsuarioAdmin) {
+                    OutlinedTextField(
+                        value = companyName,
+                        onValueChange = { companyName = it },
+                        label = { Text(stringResource(R.string.razao_social)) },
+
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = Color.Red,
+                                modifier = Modifier
+                                    .clickable(enabled = true, onClick = {
+                                        openDialog.value = true
+
+
+                                    })
+                            )
+
+                        }
+
+                    )
+                } else{
+                    OutlinedTextField(
+                        value = companyName,
+                        onValueChange = { companyName = it },
+                        label = { Text(stringResource(R.string.razao_social)) },
+
+                        modifier = Modifier.fillMaxWidth(),
+
+                    )
+                }
                 Spacer(modifier = Modifier.padding(8.dp))
 
                 OutlinedTextField(
@@ -168,13 +289,65 @@ fun UpdateClientScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
+                Row(modifier=Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    if(isUsuarioAdmin) {
+                        OutlinedTextField(
+                            value = referrer,
+                            onValueChange = { referrer = it },
+                            label = { Text(stringResource(R.string.indicacao)) },
+                            //modifier = Modifier.fillMaxWidth()
+                        )
+                    } else{
+                        OutlinedTextField(
+                            value = referrer,
+                            onValueChange = { referrer = it },
+                            label = { Text(stringResource(R.string.indicacao)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    if (isUsuarioAdmin) {
+                        Box(
+                            modifier = Modifier
+                                // .fillMaxSize()
+                                .wrapContentSize(Alignment.TopEnd)
+                        ) {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "Localized description"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false },
+                                scrollState = scrollState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                            )
+                            {
+                                usuarios?.forEach()
+                                {
+                                    DropdownMenuItem(
+                                        text = { Text("${it.name}") },
+                                        onClick = { referrer =
+                                            it.name.toString().uppercase()
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Outlined.Edit,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    )
+                                }
 
-                OutlinedTextField(
-                    value = referrer,
-                    onValueChange = { referrer = it },
-                    label = { Text(stringResource(R.string.indicacao)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.padding(8.dp))
                 Row(modifier = Modifier
                     .fillMaxWidth(),
@@ -193,18 +366,21 @@ fun UpdateClientScreen(
 
                 Button(
                     onClick = {
-                        val updatedClient = Cliente(
-                            companyName = companyName,
-                            email = email,
-                            phoneNumber = phoneNumber,
-                            contactPerson = contactPerson,
-                            cnpj = cnpj,
-                            project = project,
-                            date = date,
-                            isActive = isActive,
-                            isPending = isPending,
-                            referrer = referrer
-                        )
+                        val updatedClient =
+                            Cliente(
+                                companyName = companyName,
+                                email = email,
+                                phoneNumber = phoneNumber,
+                                contactPerson = contactPerson,
+                                cnpj = cnpj,
+                                project = project,
+                                date = date,
+                                isActive = isActive,
+                                isPending = isPending,
+                                referrer = referrer,
+                                documentId = documentoId
+                            )
+
                         try{
                             viewModel.updateClient(updatedClient)
                             Log.d("UpdateClientScreen", "UpdateClientScreen: $updatedClient")
@@ -218,13 +394,14 @@ fun UpdateClientScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Update Client")
+                    Text(stringResource(R.string.update_client))
                 }
                 Spacer(modifier = Modifier.padding(8.dp))
 
             }
         }
     }
+
 }
 
 

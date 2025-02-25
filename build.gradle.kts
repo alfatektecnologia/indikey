@@ -5,5 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.google.gms.google.services) apply false
     alias(libs.plugins.google.dagger.hilt) apply false
+    id("com.google.firebase.crashlytics") version "3.0.3" apply false
+
 
 }

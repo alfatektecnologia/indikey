@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,7 +68,7 @@ fun AddClientScreen(onBackClick: () -> Unit,
     ){
     val viewModelDashboard = hiltViewModel<DashboardViewModel>()
 
-    val userId = viewModel?.user?.displayName
+    val userDisplayName = viewModel?.user?.displayName
     var email by rememberSaveable { mutableStateOf("") }
     var contatoName by rememberSaveable { mutableStateOf("") }
     var razao_social by rememberSaveable { mutableStateOf("") }
@@ -75,7 +76,7 @@ fun AddClientScreen(onBackClick: () -> Unit,
     var projeto by rememberSaveable { mutableStateOf("") }
     var contatoPhone by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
-    var cnpjError by remember { mutableStateOf(false) }
+    var cnpjError= remember { viewModelDashboard.checkClient(cnpj) }
 
 
     // Focus management
@@ -162,6 +163,7 @@ fun AddClientScreen(onBackClick: () -> Unit,
                             onValueChange = { cnpj = it },
                             maxLines = 1,
                             singleLine = true,
+                            textStyle = TextStyle( color = if(cnpjError) Color.Red else Color.Black),
                             keyboardActions = KeyboardActions(onNext = {
                                 focusManager.moveFocus(FocusDirection.Down)
                             }),
@@ -175,16 +177,8 @@ fun AddClientScreen(onBackClick: () -> Unit,
                                     Icons.Filled.Search,
                                     contentDescription = null,
                                     modifier = Modifier.clickable {
-                                      if(!viewModelDashboard.checkClient(cnpj)){
-                                            cnpjError = true
-                                          Toast.makeText(
-                                              context, "Cliente liberado para cadastro", Toast.LENGTH_SHORT).show()
-                                      }else{
-                                         cnpjError = false
-                                          Toast.makeText(
-                                              context, "CLIENTE JÁ CADASTRADO", Toast.LENGTH_SHORT).show()
+                                     viewModelDashboard.onCnpjClick(cnpj, context)
 
-                                      }
                                     },
                                     tint = Color(0xFFAC07F3)
                                 )
@@ -290,16 +284,13 @@ fun AddClientScreen(onBackClick: () -> Unit,
                         .fillMaxWidth(),
 
                     onClick = {
-                        if (validateName(context, razao_social) && validateCnpj(
-                                context,
-                                cnpj
-                            ) && cnpjError
-                            && validateName(context, contatoName) && validateEmail(
-                                context,
-                                email
-                            ) && validatePhone(
-                                context, contatoPhone
-                            )
+                        if (
+                            validateName(context, razao_social) &&
+                            validateCnpj(context, cnpj) &&
+                            viewModelDashboard.onCnpjClick(cnpj, context)  &&
+                            validateName(context, contatoName) &&
+                            validateEmail(context, email) &&
+                            validatePhone(context, contatoPhone)
                         ) {
                             val cliente: Cliente = Cliente(
                                 companyName = razao_social,
@@ -311,7 +302,7 @@ fun AddClientScreen(onBackClick: () -> Unit,
                                 isActive = true,
                                 isPending = true,
                                 date = Date().toString(),
-                                referrer = userId!!,
+                                referrer = userDisplayName!!,
 
                                 )
                             val collection = "clientes"
@@ -320,6 +311,7 @@ fun AddClientScreen(onBackClick: () -> Unit,
                         } else {
                             Toast.makeText(context, "Verifique os campos", Toast.LENGTH_SHORT)
                                 .show()
+                            if (cnpjError) onBackClick()
                         }
 
                     },
@@ -332,6 +324,8 @@ fun AddClientScreen(onBackClick: () -> Unit,
 
     }
 }
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)

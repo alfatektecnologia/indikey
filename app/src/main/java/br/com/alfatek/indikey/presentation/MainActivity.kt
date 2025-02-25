@@ -12,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import br.com.alfatek.indikey.model.Cliente
 import br.com.alfatek.indikey.presentation.pages.auth.RegisterUserScreen
 import br.com.alfatek.indikey.presentation.pages.auth.RegisterUserViewModel
 import br.com.alfatek.indikey.presentation.pages.cliente.AddClientScreen
@@ -27,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     val viewModel by viewModels<RegisterUserViewModel>(null)
 
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
@@ -38,7 +38,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = if (viewModel.currentUser != null) ScreenC else ScreenA
+                    startDestination = if (viewModel.currentUser != null) {
+
+                        ScreenC
+                    } else ScreenA
                 ) {
                     composable<ScreenA> {
                         RegisterUserScreen(onNavigateToDashboard = {
@@ -56,7 +59,7 @@ class MainActivity : ComponentActivity() {
                         },onClientListClick = {
                             navController.navigate(ScreenE)
                         },onEditClientClick = {
-                            navController.navigate(ScreenF)//Todo create edit screen
+                            navController.navigate(ScreenF)
                         }
                         )
                     }
@@ -68,7 +71,9 @@ class MainActivity : ComponentActivity() {
                     composable<ScreenE> {
                         ClientListScreen(onBackClick = {
                             navController.navigate(ScreenC)
-                        })
+                        }, onItemClick = {
+                            navController.navigate(ScreenF)
+                        }, onClick = {})
 
                     }
                     composable<ScreenF> {

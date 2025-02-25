@@ -1,10 +1,8 @@
 package br.com.alfatek.indikey.presentation.pages.cliente
 
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.alfatek.indikey.data.AuthRepository
-import br.com.alfatek.indikey.presentation.pages.dashboard.DashboardViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,5 +24,6 @@ class AddClientViewModel @Inject constructor(
         }
 
     }
+
 
 }

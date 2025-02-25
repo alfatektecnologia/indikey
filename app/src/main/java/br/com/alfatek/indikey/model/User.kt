@@ -1,7 +1,8 @@
 package br.com.alfatek.indikey.model
 
-import java.util.Date
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class User(
     var userId: String? = null,
     var email: String? = null,
