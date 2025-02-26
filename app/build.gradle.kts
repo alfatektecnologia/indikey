@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.room.rxjava2)
     implementation(libs.androidx.room.rxjava3)
     implementation(libs.androidx.room.guava)
+    implementation(libs.firebase.crashlytics)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

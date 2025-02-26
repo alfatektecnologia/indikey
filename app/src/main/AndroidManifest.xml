@@ -10,9 +10,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/indikey_logo"
+        android:icon="@drawable/indikey_so_logo"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/indikey_logo"
+        android:roundIcon="@drawable/indikey_so_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.IndiKey"
         tools:targetApi="31">

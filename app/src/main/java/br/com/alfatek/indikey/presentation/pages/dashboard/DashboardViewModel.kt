@@ -52,7 +52,7 @@ class DashboardViewModel @Inject constructor(
                 list = resource
 
                 // Log.d("DashboardViewModel", "getAllClients: $list")
-                Log.d("DashboardViewModel", "getAllUsers: ${resource?.size}")
+                Log.d("DashboardViewModel", "getAllUsers: ${resource?.size?:0}")
 
             }
             return@launch
@@ -96,14 +96,14 @@ class DashboardViewModel @Inject constructor(
     fun getClient(cnpj: String) = viewModelScope.launch {
         _cliente.value = Resource.Loading
         val result = repository.getClientByCnpj(cnpj, Cliente::class.java)
-        result.onSuccess {
+        result?.onSuccess {
             resultCliente.value = it as Cliente
             _cliente.value = Resource.Success(it as Cliente)
 
             Log.d("DashboardViewModel", "getClient: $it")
             Log.d("DashboardViewModel", "getDocumentoID: ${getDocumentoID()}")
 
-        }.onFailure {
+        }?.onFailure {
             // _cliente.value = Resource.Error(it.message.toString())
         }
 
@@ -125,10 +125,10 @@ class DashboardViewModel @Inject constructor(
         }
         return result
     }
-    fun getActiveClients(clientes: List<Cliente>): List<Cliente> {
+    fun getActiveClients(clientes: List<Cliente>): List<Cliente>? {
         return clientes.filter { it.isActive }
     }
-    fun getPendingClients(clientes: List<Cliente>): List<Cliente> {
+    fun getPendingClients(clientes: List<Cliente>): List<Cliente>? {
         return clientes.filter { it.isPending }
     }
 

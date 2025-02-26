@@ -18,12 +18,12 @@ interface AuthRepository {
      suspend fun getUsers(): List<User>?
      suspend fun<T: Any> saveToFirestore(collection:String, data: T)
      suspend fun saveClient2Firestore(collection:String, data:Cliente)
-     suspend fun getClient(cnpj: String): Resource<Cliente>
+     suspend fun getClient(cnpj: String): Resource<Cliente>?
      suspend fun getClients(isAdmin: Boolean): List<Cliente>?
      suspend fun getActiveClients(): List<Cliente>?
      suspend fun getPendingClients(): List<Cliente>?
      suspend fun updateClient(cliente: Cliente,documentId: String)
-     suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Cliente>
+     suspend fun getClientByCnpj(cnpj: String,Cliente: Class<*>): Result<Cliente>?
      suspend fun getUserById(userId: String): User?
      suspend fun deleteDocument(documentId: String,collection: String)
      val documentID: String

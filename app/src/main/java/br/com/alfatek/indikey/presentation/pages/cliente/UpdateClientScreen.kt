@@ -195,6 +195,7 @@ fun UpdateClientScreen(
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                             openDialog.value = false
+                                            onBackClick()
                                         },
                                         //modifier = Modifier.align(Alignment.End)
                                     ) {

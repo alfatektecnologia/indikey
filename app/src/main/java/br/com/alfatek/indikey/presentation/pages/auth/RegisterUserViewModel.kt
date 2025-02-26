@@ -46,7 +46,7 @@ class RegisterUserViewModel @Inject constructor(
 
 
     suspend fun getUserAdmin(): Boolean {
-        isUsuarioAdmin.value = repository.getUserById(userId!!)?.isAdmin == true
+        isUsuarioAdmin.value = userId?.let { repository.getUserById(it)?.isAdmin } == true
         Log.d("RegisterUserViewModel", "getUserAdmin: ${isUsuarioAdmin.value}")
         sharedPreferences.edit().putBoolean("isAdmin", isUsuarioAdmin.value ).apply()
         return isUsuarioAdmin.value
