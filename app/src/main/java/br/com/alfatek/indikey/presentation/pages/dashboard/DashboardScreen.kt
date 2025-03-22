@@ -2,6 +2,7 @@ package br.com.alfatek.indikey.presentation.pages.dashboard
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -94,17 +95,18 @@ fun DashboardScreen(
         }
     }
 
-        LaunchedEffect(Unit) {
-            viewModel?.users?.let {
-                isUserAdmin.value = viewModel.isUsuarioAdmin()
-                if(!isAdmin.value)sharedPreferences.edit().putBoolean("isAdmin", isUserAdmin.value ?: false)
-                    .apply()
-            }
+    LaunchedEffect(Unit) {
+        viewModel?.users?.let {
+            isUserAdmin.value = viewModel.isUsuarioAdmin()
+            if (!isAdmin.value) sharedPreferences.edit()
+                .putBoolean("isAdmin", isUserAdmin.value ?: false)
+                .apply()
         }
-
+    }
 
 
     LaunchedEffect(Unit) {
+        Toast.makeText(context, "Acessando banco de dados...", Toast.LENGTH_SHORT).show()
         viewModel?.clientes?.collect {
             if (it != null) {
                 clientes = it

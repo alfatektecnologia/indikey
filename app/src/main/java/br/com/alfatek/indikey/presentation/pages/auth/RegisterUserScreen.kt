@@ -80,6 +80,7 @@ fun RegisterUserScreen(
     var description by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
     val registerFlow = viewModel?.registerFlow?.collectAsState()
+    val isEnable = remember { mutableStateOf(true) }
 
 
 
@@ -313,6 +314,7 @@ fun RegisterUserScreen(
                     modifier = Modifier
                         .padding(horizontal = 8.dp, vertical = 16.dp)
                         .fillMaxWidth(),
+                    enabled = isEnable.value,
 
                     onClick = {
                         if (validateName(context, name) &&
@@ -323,6 +325,12 @@ fun RegisterUserScreen(
                             (password == confirmPass)
                         ) {
                             viewModel?.registerUser(name, email, password)
+                            isEnable.value=false
+                            Toast.makeText(
+                                context,
+                                "Salvando dados...",
+                                Toast.LENGTH_LONG
+                            ).show()
 
                         } else {
                             Toast.makeText(
